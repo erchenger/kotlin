@@ -129,6 +129,13 @@ object IDELightClassContexts {
         return IDELightClassConstructionContext(resolveSession.bindingContext, resolveSession.moduleDescriptor, EXACT)
     }
 
+    fun contextForScript(file: KtFile): LightClassConstructionContext {
+        val resolveSession = file.getResolutionFacade().getFrontendService(ResolveSession::class.java)
+
+        forceResolvePackageDeclarations(listOf(file), resolveSession)
+        return IDELightClassConstructionContext(resolveSession.bindingContext, resolveSession.moduleDescriptor, EXACT)
+    }
+
     fun lightContextForClassOrObject(classOrObject: KtClassOrObject): LightClassConstructionContext? {
         if (!isDummyResolveApplicable(classOrObject)) return null
 
@@ -198,6 +205,14 @@ object IDELightClassContexts {
         val resolveSession = setupAdHocResolve(representativeFile.project, representativeFile.getResolutionFacade().moduleDescriptor, files)
 
         forceResolvePackageDeclarations(files, resolveSession)
+
+        return IDELightClassConstructionContext(resolveSession.bindingContext, resolveSession.moduleDescriptor, LIGHT)
+    }
+
+    fun lightContextForScript(file: KtFile): LightClassConstructionContext {
+        val resolveSession = setupAdHocResolve(file.project, file.getResolutionFacade().moduleDescriptor, listOf(file))
+
+        forceResolvePackageDeclarations(listOf(file), resolveSession)
 
         return IDELightClassConstructionContext(resolveSession.bindingContext, resolveSession.moduleDescriptor, LIGHT)
     }

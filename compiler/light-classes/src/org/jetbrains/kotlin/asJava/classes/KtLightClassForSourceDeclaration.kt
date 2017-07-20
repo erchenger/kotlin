@@ -27,6 +27,7 @@ import com.intellij.psi.impl.PsiSubstitutorImpl
 import com.intellij.psi.impl.java.stubs.PsiJavaFileStub
 import com.intellij.psi.impl.source.PsiImmediateClassType
 import com.intellij.psi.scope.PsiScopeProcessor
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.stubs.StubElement
@@ -39,10 +40,7 @@ import org.jetbrains.kotlin.asJava.ImpreciseResolveResult
 import org.jetbrains.kotlin.asJava.ImpreciseResolveResult.UNSURE
 import org.jetbrains.kotlin.asJava.LightClassGenerationSupport
 import org.jetbrains.kotlin.asJava.LightClassUtil
-import org.jetbrains.kotlin.asJava.builder.InvalidLightClassDataHolder
-import org.jetbrains.kotlin.asJava.builder.LightClassData
-import org.jetbrains.kotlin.asJava.builder.LightClassDataHolder
-import org.jetbrains.kotlin.asJava.builder.LightClassDataProviderForClassOrObject
+import org.jetbrains.kotlin.asJava.builder.*
 import org.jetbrains.kotlin.asJava.elements.FakeFileForLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightIdentifier
 import org.jetbrains.kotlin.asJava.elements.KtLightModifierList
@@ -326,6 +324,8 @@ abstract class KtLightClassForSourceDeclaration(protected val classOrObject: KtC
     companion object {
         private val JAVA_API_STUB = Key.create<CachedValue<LightClassDataHolder.ForClass>>("JAVA_API_STUB")
 
+        private val JAVA_API_STUB_FOR_SCRIPT = Key.create<CachedValue<LightClassDataHolder.ForScript>>("JAVA_API_STUB_FOR_SCRIPT")
+
         private val jetTokenToPsiModifier = listOf(
                 PUBLIC_KEYWORD to PsiModifier.PUBLIC,
                 INTERNAL_KEYWORD to PsiModifier.PUBLIC,
@@ -334,7 +334,7 @@ abstract class KtLightClassForSourceDeclaration(protected val classOrObject: KtC
 
 
         fun create(classOrObject: KtClassOrObject): KtLightClassForSourceDeclaration? {
-            if (classOrObject.containingKtFile.isScript || classOrObject.hasModifier(KtTokens.HEADER_KEYWORD)) {
+            if (classOrObject.hasModifier(KtTokens.HEADER_KEYWORD)) {
                 return null
             }
 
@@ -366,10 +366,19 @@ abstract class KtLightClassForSourceDeclaration(protected val classOrObject: KtC
         }
 
         fun getLightClassDataHolder(classOrObject: KtClassOrObject): LightClassDataHolder.ForClass {
-            return getLightClassCachedValue(classOrObject).value
+            return classOrObject.containingKtFile.script?.let { getLightClassCachedValue(it).value } ?:
+                   getLightClassCachedValue(classOrObject).value
         }
 
-        fun getLightClassCachedValue(classOrObject: KtClassOrObject): CachedValue<LightClassDataHolder.ForClass> {
+        private fun getLightClassCachedValue(script: KtScript): CachedValue<LightClassDataHolder.ForScript> {
+            return script.getUserData(JAVA_API_STUB_FOR_SCRIPT) ?:
+                   getLightClassCachedValueFromScriptCache(script).also { script.putUserData(JAVA_API_STUB_FOR_SCRIPT, it) }
+        }
+
+        private fun getLightClassCachedValueFromScriptCache(script: KtScript): CachedValue<LightClassDataHolder.ForScript> =
+                KtLightClassForScript.ScriptStubCache.getInstance(script.project)[script.fqName, GlobalSearchScope.allScope(script.project)]
+
+        private fun getLightClassCachedValue(classOrObject: KtClassOrObject): CachedValue<LightClassDataHolder.ForClass> {
             var value =
                     getOutermostClassOrObject(classOrObject).getUserData(JAVA_API_STUB) // stub computed for outer class can be used for inner/nested
                     ?: classOrObject.getUserData(JAVA_API_STUB)

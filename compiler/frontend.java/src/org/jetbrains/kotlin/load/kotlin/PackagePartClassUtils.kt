@@ -54,6 +54,9 @@ object PackagePartClassUtils {
     @JvmStatic fun getFilesWithCallables(files: Collection<KtFile>): List<KtFile> =
             files.filter { fileHasTopLevelCallables(it) }
 
+    @JvmStatic fun getKotlinScriptFiles(files: Collection<KtFile>): List<KtFile> =
+            files.filter { it.isScript }
+
     @JvmStatic fun fileHasTopLevelCallables(file: KtFile): Boolean =
             file.declarations.any {
                 (it is KtProperty ||

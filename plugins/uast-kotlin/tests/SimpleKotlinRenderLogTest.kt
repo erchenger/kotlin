@@ -28,4 +28,8 @@ class SimpleKotlinRenderLogTest : AbstractKotlinRenderLogTest() {
     @Test fun testQualifiedConstructorCall() = doTest("QualifiedConstructorCall")
 
     @Test fun testPropertyDelegate() = doTest("PropertyDelegate")
+
+    @Test fun testInnerClasses() = doTest("InnerClasses")
+
+    @Test fun testSimpleScript() = doTest("SimpleScript")
 }

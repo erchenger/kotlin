@@ -21,6 +21,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
+import org.jetbrains.kotlin.asJava.classes.KtLightClassForScript
 import org.jetbrains.kotlin.asJava.elements.KtLightAnnotationForSourceEntry
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightIdentifier
@@ -41,6 +42,12 @@ fun KtFile.findFacadeClass(): KtLightClass? {
     return LightClassGenerationSupport.getInstance(project)
             .getFacadeClassesInPackage(packageFqName, this.useScope as? GlobalSearchScope ?: GlobalSearchScope.projectScope(project))
             .firstOrNull { it is KtLightClassForFacade && this in it.files } as? KtLightClass
+}
+
+fun KtFile.findScriptClass(): KtLightClass? {
+    return LightClassGenerationSupport.getInstance(project)
+            .getScriptClassesInPackage(packageFqName, this.useScope as? GlobalSearchScope ?: GlobalSearchScope.projectScope(project))
+            .firstOrNull { it is KtLightClassForScript && this == it.file } as? KtLightClass
 }
 
 fun KtElement.toLightElements(): List<PsiNamedElement> =

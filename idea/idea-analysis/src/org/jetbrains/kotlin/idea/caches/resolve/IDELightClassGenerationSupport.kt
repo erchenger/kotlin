@@ -82,6 +82,14 @@ class IDELightClassGenerationSupport(private val project: Project) : LightClassG
         )
     }
 
+    override fun createDataHolderForScript(file: KtFile, builder: LightClassBuilder): LightClassDataHolder.ForScript {
+        return LazyLightClassDataHolder.ForScript(
+                builder,
+                exactContextProvider = { IDELightClassContexts.contextForScript(file) },
+                dummyContextProvider = { IDELightClassContexts.lightContextForScript(file) }
+        )
+    }
+
     override fun findClassOrObjectDeclarations(fqName: FqName, searchScope: GlobalSearchScope): Collection<KtClassOrObject> {
         return runReadAction {
             KotlinFullClassNameIndex.getInstance().get(fqName.asString(), project, sourceAndClassFiles(searchScope, project))
@@ -202,6 +210,12 @@ class IDELightClassGenerationSupport(private val project: Project) : LightClassG
         }
     }
 
+    override fun findFileForScript(scriptFqName: FqName, scope: GlobalSearchScope): KtFile? {
+        return runReadAction {
+            KotlinScriptFqnIndex.instance.get(scriptFqName.asString(), project, scope).firstOrNull()?.containingKtFile
+        }
+    }
+
     override fun resolveToDescriptor(declaration: KtDeclaration): DeclarationDescriptor? {
         try {
             return declaration.resolveToDescriptor()
@@ -234,6 +248,17 @@ class IDELightClassGenerationSupport(private val project: Project) : LightClassG
             val (key, files) = it
             val (fqName, moduleInfo) = key
             createLightClassForFileFacade(fqName, files, moduleInfo)
+        }
+    }
+
+    override fun getScriptClassesInPackage(packageFqName: FqName, scope: GlobalSearchScope): Collection<PsiClass> {
+        val scriptsInPackage = runReadAction {
+            KotlinScriptFqnIndex.instance.get(packageFqName.asString(), project, scope)
+        }
+
+        // TODO: For decompiled kotlin file?
+        return scriptsInPackage.map {
+            KtLightClassForScript.createForScript(psiManager, it.fqName, scope, it.containingKtFile)
         }
     }
 

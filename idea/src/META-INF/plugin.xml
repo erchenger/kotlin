@@ -306,6 +306,9 @@
     <projectService serviceInterface="org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade$FacadeStubCache"
                     serviceImplementation="org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade$FacadeStubCache"/>
 
+    <projectService serviceInterface="org.jetbrains.kotlin.asJava.classes.KtLightClassForScript$ScriptStubCache"
+                    serviceImplementation="org.jetbrains.kotlin.asJava.classes.KtLightClassForScript$ScriptStubCache"/>
+
     <projectService serviceInterface="org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches"
                     serviceImplementation="org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches"/>
 

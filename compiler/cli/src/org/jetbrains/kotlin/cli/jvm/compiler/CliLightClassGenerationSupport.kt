@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.asJava.LightClassGenerationSupport
 import org.jetbrains.kotlin.asJava.builder.*
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
+import org.jetbrains.kotlin.asJava.classes.KtLightClassForScript
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
@@ -176,7 +177,20 @@ class CliLightClassGenerationSupport(project: Project) : LightClassGenerationSup
         }
     }
 
+    override fun findFileForScript(scriptFqName: FqName, scope: GlobalSearchScope): KtFile? {
+        if (scriptFqName.isRoot) return null
+
+        return PackagePartClassUtils.getKotlinScriptFiles(findFilesForPackage(scriptFqName.parent(), scope)).find {
+            it.script?.fqName == scriptFqName
+        }
+    }
+
     override fun createDataHolderForFacade(files: Collection<KtFile>, builder: LightClassBuilder): LightClassDataHolder.ForFacade {
+        val (stub, _, diagnostics) = builder(getContext())
+        return LightClassDataHolderImpl(stub, diagnostics)
+    }
+
+    override fun createDataHolderForScript(file: KtFile, builder: LightClassBuilder): LightClassDataHolder.ForScript {
         val (stub, _, diagnostics) = builder(getContext())
         return LightClassDataHolderImpl(stub, diagnostics)
     }
@@ -233,6 +247,12 @@ class CliLightClassGenerationSupport(project: Project) : LightClassGenerationSup
         return PackagePartClassUtils.getFilesWithCallables(findFilesForPackage(packageFqName, scope)).groupBy {
             JvmFileClassUtil.getFileClassInfoNoResolve(it).facadeClassFqName
         }.mapNotNull { KtLightClassForFacade.createForFacade(psiManager, it.key, scope, it.value) }
+    }
+
+    override fun getScriptClassesInPackage(packageFqName: FqName, scope: GlobalSearchScope): Collection<PsiClass> {
+        return PackagePartClassUtils.getKotlinScriptFiles(findFilesForPackage(packageFqName, scope)).map {
+            KtLightClassForScript.createForScript(psiManager, it.script!!.fqName, scope, it)
+        }
     }
 
     override fun getFacadeNames(packageFqName: FqName, scope: GlobalSearchScope): Collection<String> {

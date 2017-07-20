@@ -38,6 +38,8 @@ abstract class LightClassGenerationSupport {
 
     abstract fun createDataHolderForFacade(files: Collection<KtFile>, builder: LightClassBuilder): LightClassDataHolder.ForFacade
 
+    abstract fun createDataHolderForScript(file: KtFile, builder: LightClassBuilder): LightClassDataHolder.ForScript
+
     abstract fun findClassOrObjectDeclarations(fqName: FqName, searchScope: GlobalSearchScope): Collection<KtClassOrObject>
 
     /*
@@ -73,9 +75,13 @@ abstract class LightClassGenerationSupport {
 
     abstract fun getFacadeClassesInPackage(packageFqName: FqName, scope: GlobalSearchScope): Collection<PsiClass>
 
+    abstract fun getScriptClassesInPackage(packageFqName: FqName, scope: GlobalSearchScope): Collection<PsiClass>
+
     abstract fun getFacadeNames(packageFqName: FqName, scope: GlobalSearchScope): Collection<String>
 
     abstract fun findFilesForFacade(facadeFqName: FqName, scope: GlobalSearchScope): Collection<KtFile>
+
+    abstract fun findFileForScript(scriptFqName: FqName, scope: GlobalSearchScope): KtFile?
 
     companion object {
         @JvmStatic fun getInstance(project: Project): LightClassGenerationSupport {
