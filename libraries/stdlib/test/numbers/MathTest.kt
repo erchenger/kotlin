@@ -34,8 +34,7 @@ fun assertAlmostEquals(expected: Float, actual: Float, tolerance: Double? = null
     }
 }
 
-/** TODO: Rename to just MathTest */
-class MathCommonTest {
+class DoubleMathTest {
 
     @Test fun trigonometric() {
         assertEquals(0.0, sin(0.0))
